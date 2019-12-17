@@ -1,0 +1,376 @@
+---
+title: "CS422 Section 01"
+author: "Megha Tatti, A20427027, Illinois Institute of Technology"
+date: "February 28, 2019"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+  html_notebook:
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    toc_depth: 5
+---
+
+#Part 2
+##Section 2.1
+###2.1(a)
+
+```{r}
+rm(list = ls())
+library(rpart)
+library(caret)
+library(lattice)
+library(ggplot2)
+setwd("C:/Users/megha/Desktop/DM/Megha_Tatti_hw2")
+set.seed(1122)
+adult.train.dataset<-read.csv("adult-train.csv",header=T, sep=",", comment.char = '#')
+#adult.train.dataset
+
+sum(adult.train.dataset$workclass=="?")
+sum(adult.train.dataset$occupation=="?")
+sum(adult.train.dataset$native_country=="?")
+#sum(adult.train.dataset=="?")
+
+clean.train<-which((adult.train.dataset$workclass=="?")|(adult.train.dataset$occupation=="?")|(adult.train.dataset$native_country=="?"))
+adult.train.dataset<-adult.train.dataset[-(clean.train),]
+#which(adult.train.dataset=="?")
+#sum(adult.train.dataset=="?")
+
+
+adult.test.dataset<-read.csv("adult-test.csv",header=T,sep = ",",comment.char = "#")
+#adult.test.dataset
+sum(adult.test.dataset$workclass=="?")
+sum(adult.test.dataset$occupation=="?")
+sum(adult.test.dataset$native_country=="?")
+#sum(adult.test.dataset=="?")
+
+clean.test<-which((adult.test.dataset$workclass=="?")|(adult.test.dataset$occupation=="?")|(adult.test.dataset$native_country=="?"))
+adult.test.dataset<-adult.test.dataset[-(clean.test),]
+#sum(adult.test.dataset=="?")
+
+
+cat("Sanity check adult-train set:",NROW(adult.train.dataset),"\n")
+cat("Sanity check adult-test set:",NROW(adult.test.dataset),"\n")
+
+```
+
+###2.1(b)
+
+```{r}
+library(rpart.plot)
+model.train <- rpart(income ~ ., method="class", data=adult.train.dataset)
+summary(model.train)
+rpart.plot(model.train, extra=104, fallen.leaves = T, type=4)
+
+```
+
+####2.1(b) (i)
+
+From the summary of "model.train", we can find that the top 3 important predictors are :relationship, marital_status, capital_gain
+
+####2.1(b) (ii)
+
+The first split is done on the predictor "relationship"
+The predicted class of the first node is: <=50K        
+The distribution of observations between the "<=50K" and ">50K" classes at the first node is as follows:
+left child(Node number 2) - 16292 observations, right child(Node number 3) - 13869 observations
+
+###2.1(c)
+```{r}
+library(e1071)
+model.predict <- predict(model.train, adult.test.dataset, type="class")
+#model.predict
+confusion.matrix<-confusionMatrix(model.predict, adult.test.dataset[, 15])
+confusion.matrix
+```
+
+####2.1(c) (i)
+```{r}
+sensitivity<- as.numeric(formatC(confusion.matrix$byClass[1], digits = 3, format = "f"))
+specificity<- as.numeric(formatC(confusion.matrix$byClass[2], digits = 3, format = "f"))
+balanced.accuracy.model <-(sensitivity+specificity)/2
+balanced.accuracy.model <- round(balanced.accuracy.model,digits=3)
+cat("The Balance Accuracy(average of sensitivity and specificity) of the model is:",balanced.accuracy.model,"\n")
+
+```
+
+####2.1(c) (ii)
+```{r}
+balanced.error.rate <- 1.0 - balanced.accuracy.model
+cat("The Balanced error rate of the model:",balanced.error.rate,"\n")
+```
+
+####2.1(c) (iii)
+```{r}
+cat("The Sensitivity is: ",sensitivity,"\n")
+cat("The specificity is: ",specificity,"\n")
+```
+
+####2.1(c) (iv)
+```{r}
+library(ROCR)
+rocr.predict <- predict(model.train, newdata=adult.test.dataset, type="prob")[,2]
+income.pred <- prediction(rocr.predict, adult.test.dataset$income)
+income.perf <- performance(income.pred, "tpr", "fpr")
+plot(income.perf, colorize=T, lwd=3)
+abline(0,1)
+auc <- performance(income.pred, measure = "auc")
+cat("The area under curve (AUC) for this model:", round(auc@y.values[[1]], 3))
+```
+
+###2.1(d)
+```{r}
+library(rpart)
+options("digits"=5)
+printcp(model.train)
+plotcp(model.train)
+```
+The tree wouldn't benefit from pruning as the percentage of xerror (cross validation error) keeps reducing at each level and there is no level in which the xerror percentage increases when compared to the previous level. Pruning the tree would result in increase of xerror percentage. This shows that the decision tree model does not need pruning and the model works fine for the test data(indications of absence of overfitting on the train data).The xerror is the lowest at the 4th split or the last split.
+The complexity level at which pruning should be done can be calculated using the below code: 
+```{r}
+complexity.level=model.train$cptable[which.min(model.train$cptable[,"xerror"]), "CP"]
+cat("Complexity level where the tree should be pruned: ", complexity.level , "\n")
+
+prune.tree <- prune(model.train, cp=complexity.level)
+rpart.plot(prune.tree, extra=104, fallen.leaves = T, type=4)
+
+predict.prune.tree <- predict(prune.tree, adult.test.dataset, type="class")
+confusionMatrix(predict.prune.tree, adult.test.dataset[, 15])
+#From the confusion matrix, it is clearly visible that pruning does not help as all the values of metrics are same compared to the values of metrics before pruning.
+```
+
+###2.1(e)
+####2.1(e) (i)
+
+```{r}
+less.50k<-which(adult.train.dataset$income=="<=50K")
+grear.50k<-which(adult.train.dataset$income==">50K")
+cat("Observations in training dataset with <=50K",NROW(less.50k),"\n")
+cat("Observations in training dataset with >50K",NROW(grear.50k),"\n")
+```
+
+####2.1(e) (ii)
+```{r}
+index.remove <- sample(which(adult.train.dataset$income=="<=50K"), size=15145)
+new.adult.train.dataset <- adult.train.dataset[-index.remove,]
+
+table(new.adult.train.dataset$income)
+
+```
+
+
+
+
+####2.1(e) (iii)
+```{r}
+new.model.train <- rpart(income ~ ., method="class", data=new.adult.train.dataset)
+summary(new.model.train)
+rpart.plot(new.model.train, extra=104, fallen.leaves = T, type=4, main="Rpart on Salary data trimmed data(Full Tree)") 
+predict.test.balanced<- predict(new.model.train, adult.test.dataset, type="class")
+confusionMatrix(predict.test.balanced,as.factor(adult.test.dataset[, 15]))
+
+```
+
+
+#####2.1(e) (iii) (i)
+```{r}
+confusion.matrix.balance <- confusionMatrix(predict.test.balanced, adult.test.dataset[,15])
+balance.accuracy<- as.numeric(formatC(confusion.matrix.balance$byClass[11], digits = 3, format = "f"))
+cat("The Balance Accuracy is ",balance.accuracy,"\n")
+
+
+```
+
+
+#####2.1(e) (iii) (ii)
+```{r}
+
+balance.errorrate<- 1.0 - balance.accuracy
+cat("The Balance error rate  is ",balance.errorrate,"\n")
+
+
+```
+
+#####2.1(e) (iii) (iii)
+```{r}
+balance.sensitivity<- as.numeric(formatC(confusion.matrix.balance$byClass[1], digits = 3, format = "f"))
+balance.specificity<- as.numeric(formatC(confusion.matrix.balance$byClass[2], digits = 3, format = "f"))
+cat("The Sensitivity is ",balance.sensitivity,"\n")
+cat("The Specificity is ",balance.specificity,"\n")
+
+```
+
+
+#####2.1(e) (iii) (iv)
+```{r}
+new.rocr.predict <- predict(new.model.train, newdata=adult.test.dataset, type="prob")[,2]
+new.income.pred <- prediction(new.rocr.predict, adult.test.dataset$income)
+new.income.perf <- performance(new.income.pred, "tpr", "fpr")
+plot(new.income.perf, colorize=T, lwd=3)
+abline(0,1)
+new.auc <- performance(new.income.pred, measure = "auc")
+cat("The area under curve (AUC) for this model is ", round(new.auc@y.values[[1]], 3))
+
+```
+
+####2.1(f)
+Observations comparing the models used in (c and e).
+1. The balanced accuracy of the balanced model(e) is 0.803 (80.3% accuracy) is more than the balanced accuracy of the unbalanced model(c) 0.726 (72.6% accuracy).
+2. Sensitvity of the balanced model is 0.776 which is lesser than the sensitivity of the unbalanced model 0.948 (Balanced model has lesser sensitivity than the imbalanced model).
+3. Specificity of the balanced model is 0.828 is more than the Specificity of the unbalanced model 0.504(Balanced model has higher spevificity than the imbalanced model).
+4. AUC of the balanced model is 0.845 is more than the AUC of the unbalanced model 0.843 ( AUC of the balanced model is higher than the imbalanced model).
+
+Thus the balanced model is better.
+
+
+###Section 2.2
+###2.2(a)
+
+```{r}
+
+products<-read.csv("products.csv",sep = ",",header = T)
+products$Chocolate.Cake <- as.character(products$Chocolate.Cake)
+tr1k<-read.csv("tr-1k.csv",sep = ",",header = F)[,2:7]
+tr5k<-read.csv("tr-5k.csv",sep = ",",header = F)[,2:6]
+tr20k<-read.csv("tr-20k.csv",sep = ",",header = F)[,2:8]
+tr75k<-read.csv("tr-75k.csv",sep = ",",header = F)[,2:5]
+df1 <- t(apply(tr1k,1, function(x){
+    x <- products[x,2]
+}))
+df1<- do.call(rbind.data.frame, df1)
+names(df1)<- NULL
+write.csv(df1, file = "tr-1k-canonical.csv", quote=FALSE, na = "", eol="\n", row.names = FALSE)
+df2 <- t(apply(tr5k,1, function(x){
+    x <- products[x,2]
+}))
+df2<- do.call(rbind.data.frame, df2)
+names(df2)<- NULL
+write.csv(df2, file = "tr-5k-canonical.csv", quote=FALSE, na = "", eol="\n", row.names = FALSE)
+df3 <- t(apply(tr20k,1, function(x){
+    x <- products[x,2]
+}))
+df3<- do.call(rbind.data.frame, df3)
+names(df3)<- NULL
+write.csv(df3, file = "tr-20k-canonical.csv", quote=FALSE, na = "", eol="\n", row.names = FALSE)
+df4 <- t(apply(tr75k,1, function(x){
+    x <- products[x,2]
+}))
+df4<- do.call(rbind.data.frame, df4)
+names(df4)<- NULL
+write.csv(df4, file = "tr-75k-canonical.csv", quote=FALSE, na = "", eol="\n", row.names = FALSE)
+```
+
+###2.2(b)
+
+```{r}
+library(arules)
+library(arulesViz)
+tr1k.canonical <- read.transactions("tr-1k-canonical.csv", sep=",",rm.duplicates = TRUE)
+tr5k.canonical <- read.transactions("tr-5k-canonical.csv", sep=",",rm.duplicates = TRUE)
+tr20k.canonical <- read.transactions("tr-20k-canonical.csv",sep=",",rm.duplicates = TRUE)
+tr75k.canonical <- read.transactions("tr-75k-canonical.csv", sep=",",rm.duplicates = TRUE)
+```
+
+```{r}
+tr1k.ap <- apriori(tr1k.canonical, parameter=list(support=0.029, target="frequent itemsets"))
+inspect(sort(tr1k.ap, decreasing = T, by="count"))
+```
+```{r}
+tr1k.ap1 <- apriori(tr1k.canonical, parameter=list(support=0.0292, confidence = 0.9))
+inspect(sort(tr1k.ap1, decreasing = T))
+```
+
+```{r}
+tr5k.ap <- apriori(tr5k.canonical, parameter=list(support=0.024, target="frequent itemsets"))
+inspect(sort(tr5k.ap, decreasing = T, by="count"))
+```
+```{r}
+tr5k.ap1 <- apriori(tr5k.canonical, parameter=list(support=0.024, confidence = 0.9))
+inspect(sort(tr5k.ap1, decreasing = T))
+```
+```{r}
+tr20k.ap <- apriori(tr20k.canonical, parameter=list(support=0.032, target="frequent itemsets"))
+inspect(sort(tr20k.ap, decreasing = T, by="count"))
+```
+```{r}
+tr20k.ap1 <- apriori(tr20k.canonical, parameter=list(support=0.025, confidence = 0.9))
+inspect(sort(tr20k.ap1, decreasing = T))
+```
+
+```{r}
+tr75k.ap <- apriori(tr75k.canonical, parameter=list(support=0.019, target="frequent itemsets"))
+inspect(sort(tr75k.ap, decreasing = T, by="count"))
+```
+
+```{r}
+tr75k.ap1 <- apriori(tr75k.canonical, parameter=list(support=0.019, confidence = 0.9))
+inspect(sort(tr75k.ap1, decreasing = T))
+```
+
+###2.2(c)
+
+```{r}
+summary(tr1k.ap1)
+summary(tr5k.ap1)
+summary(tr20k.ap1)
+summary(tr75k.ap1)
+#According to my observation, 
+#For the rules of 1,000transactions, set of rules is : 6
+#For the rules of 5,000transactions, set of rules is : 15
+#For the rules of 20,000transactions, set of rules is : 27
+#For the rules of 75,000transactions, set of rules is : 9
+#So here, for 1,000transactions and 20,000transactions the set of rules increases as the number of trasaction increases and for 5,000transactions and 75,000transactions the set of rules decreases as the number of transaction increases.
+inspect(head(sort(tr1k.ap1, decreasing = T)))
+inspect(head(sort(tr5k.ap1,decreasing = T)))
+inspect(head(sort(tr20k.ap1,decreasing = T)))
+inspect(head(sort(tr75k.ap1,decreasing = T)))
+#the support and confidence for the rule itemset LHS:{Apricot Danish,Opera Cake}=>RHS:{Cherry Tart} for 1,000transactions is [Support:0.03626, Confidence:0.97436]. For 5,000transactions is [Support:0.034074, Confidence:0.95408]. For 20,000transactions is [Support:0.040112, Confidence:0.94676] and for 75,000transactions is [Support:0.028842, Confidence:0.96868]
+
+#The plot for 1000transactions for 6 rules is as follow:
+plot(tr1k.ap1, measure = c("support", "lift"), shading = "confidence")
+plot(tr1k.ap1, method = "two-key plot")
+plot(tr1k.ap1, method = "paracoord")
+
+
+#The plot for 5000transactions for 15 rules is as follow:
+plot(tr5k.ap1, measure = c("support", "lift"), shading = "confidence")
+plot(tr5k.ap1, method = "two-key plot")
+plot(tr5k.ap1, method = "paracoord")
+
+
+#The plot for 20000transactions for 27 rules is as follow:
+plot(tr20k.ap1, measure = c("support", "lift"), shading = "confidence")
+plot(tr20k.ap1, method = "two-key plot")
+plot(tr20k.ap1, method = "paracoord")
+
+
+#The plot for 75000transactions for 9 rules is as follow:
+plot(tr75k.ap1, measure = c("support", "lift"), shading = "confidence")
+plot(tr75k.ap1, method = "two-key plot")
+plot(tr75k.ap1, method = "paracoord")
+
+
+
+```
+
+
+
+
+
+
+
+###2.2(d)
+####2.2(d) (a)
+```{r}
+a<-inspect(sort(tr75k.ap, by='support', decreasing = T)[1:5])
+cat("The most frequently purchased item is: Coffee Eclair" )
+
+```
+####2.2(d) (b)
+```{r}
+a<-inspect(sort(tr75k.ap, by='support', decreasing = F)[1:5])
+cat("The least frequently purchased itemset is: {Apple Croissant,Apple Danish,Apple Tart}")
+
+```

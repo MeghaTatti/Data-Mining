@@ -1,0 +1,402 @@
+---
+title: "CS 422 Section 01"
+date: "April 6, 2019"
+output:
+  html_notebook:
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+author: "Megha Tatti, A20427027, Illinois Institute of Technology"
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = "C:/Users/megha/Desktop/DM/Megha_Tatti_hw3")
+```
+
+```{r}
+rm(list=ls())
+#setwd("C:/Users/megha/Desktop/DM/Megha_Tatti_hw3")
+df <- read.csv("buddymove_holidayiq.csv", sep=",", header=T)
+#df
+```
+
+
+# Part 2
+## Section 2.1
+### 2.1(a)
+
+```{r}
+library(cluster)
+library(factoextra)
+fviz_nbclust(df[2:7], kmeans, method="wss")
+fviz_nbclust(df[2:7], kmeans, method="silhouette")
+```
+
+### 2.1(b)
+```{r}
+k <- kmeans(df[2:7], centers=3, nstart=25)
+fviz_cluster(k, data=df[2:7])
+```
+
+### 2.1(c)
+```{r}
+str(k)
+```
+
+```{r}
+cat("The number of observations in each cluster is as follows: \n")
+cat("Cluster-1(red)=>",k$size[1],"observations \n")
+cat("Cluster-2(green)=>",k$size[2],"observations \n")
+cat("Cluster-3(blue)=>",k$size[3],"observations \n")
+
+```
+### 2.1(d)
+```{r}
+cat("The total SSE of the clusters is: ",k$totss,"\n")
+
+```
+
+### 2.1(e)
+```{r}
+cat("The SSE of each cluster is as follows: \n")
+cat("Cluster-1(red)=>",k$withinss[1],"\n")
+cat("Cluster-2(green)=>",k$withinss[2],"\n")
+cat("Cluster-3(blue)=>",k$withinss[3],"\n")
+```
+### 2.1(f)
+```{r}
+Cluster.1<-(df[2:7][which(k$cluster == 1),])
+Cluster.1
+#sort(Cluster.1$Picnic,decreasing = FALSE)
+```
+Observations from Cluster-1:
+From the Cluster data obtained above, we can say that, people here are mostly religious(123 to 203 reviews) and liking towards shopping(129 to 233 reviews) people.
+They are moderately into liking for Picnic(88-188 reviews),Nature(59-163 reviews) and theatre(74-164 reviews).
+They have least liking for Sports(6-25 reviews).
+
+
+```{r}
+Cluster.2<-(df[2:7][which(k$cluster == 2),])
+Cluster.2
+#sort(Cluster.2$Picnic,decreasing = FALSE)
+
+```
+Observations from Cluster-2:
+From the Cluster data obtained above, we can say that, people here mostly like Theatre(59-168 reviews) and Nature(52-155 reviews).
+Then their next preference of liking is Shopping and Picnic equally with 50-141 reviews in both. 
+They have moderately religious(50-128 reviews).
+They have the least liking towards Sports(2-12 reviews).
+
+
+```{r}
+Cluster.3<-(df[2:7][which(k$cluster == 3),])
+Cluster.3
+#sort(Cluster.3$Religious,decreasing = FALSE)
+
+```
+Observations from Cluster-3:
+From the Cluster data obtained above, we can say that, people here mostly like Nature(94-318 reviews).
+Their next preference would be picnic(89-218reviews) and theatre(89-213 reviews).
+Then comes Shopping(69-183 reviews)
+They are moderate religious people(74-158 reviews).
+They are the least sports people(10-25 reviews).
+
+
+Observations as a whole of all the clusters:
+Sports:Cluster 3 is has more sports people.
+Religious:Cluster 1 has more religious people.
+Nature:Cluster 3 has more Nature linking people.
+Theatre:Cluster 3 has more Theatre liking people.
+Shopping:Cluster 1 has more Shopping people.
+Picnic:Cluster 3 has more Picnic people.
+As we can see from the observations, Cluster-2 people are not much social.
+Cluster 3 are very social and cluster 1 are moderate social.
+
+
+
+## Section 2.2
+### 2.2
+
+```{r}
+#library(dplyr)
+#library(stats)
+d<-read.csv("buddymove_holidayiq.csv", sep=",", header=T, row.names = 1)
+set.seed(1122)
+sample.set<-dplyr::sample_n(d,size=50)
+sample.set
+scaled.data<-scale(sample.set)
+scaled.data
+```
+#### 2.2(a)
+
+```{r}
+#library(factoextra)
+library(ggplot2)
+
+#Single Linkage
+single.hclust<-eclust(scaled.data,"hclust",hc_method="single",k=1)
+fviz_dend(single.hclust, show_labels=TRUE, palette="jco", as.ggplot=T, main="Single-Linkage of Dendrogram")
+plot(single.hclust)
+single.hclust$nbclust
+
+
+#Complete Linkage
+complete.hclust<-eclust(scaled.data,"hclust",hc_method = "complete",k=1)
+fviz_dend(complete.hclust, show_labels=TRUE, palette="jco", as.ggplot=T, main="Complete-Linkage of Dendrogram")
+plot(complete.hclust)
+complete.hclust$nbclust
+
+#Average Linkage
+avg.hclust<-eclust(scaled.data,"hclust",hc_method = "average",k=1)
+fviz_dend(avg.hclust, show_labels=TRUE, palette="jco", as.ggplot=T, main="Average-Linkage of Dendrogram")
+plot(avg.hclust)
+avg.hclust$nbclust
+
+```
+
+
+
+#### 2.2(b)
+Single linkage singleton cluster:
+{User200,User195}, {User224,User221}, {User167,User240}, {User71,User98}, {User12,User11}, {User36,User60}, {User18,User41}, {User23,User38}, {User43,User35}, {User157,User131}, {User116,User139}, {User140,User145}, {User155,User136}, {User197,User217}, {User199,User168} 
+
+Complete linkage singleton cluster:
+{User71,User98}, {User12,User11}, {User72,User73}, {User115,User56}, {User18,User41}, {User23,User38}, {User43,User35}, {User36,User60}, {User4,User37}, {User200,User195}, {User199,User168}, {User197,User217}, {User224,User221}, {User167,User240}, {User140,User145}, {User155,User136}, {User170,User225}, {User157,User131}, {User116,User139}
+
+Average linkage singleton cluster:
+{User12,User11}, {User43,User35}, {User36,User60}, {User4,User37}, {User72,User73}, {User18,User41}, {User23,User38}, {User71,User98}, {User140,User145}, {User155,User136}, {User157,User131}, {User116,User139}, {User200,User195}, {User224,User221}, {User167,User240}, {User197,User217}, {User170,User225}, {User199,User168}
+
+#### 2.2(c)
+By our definition, the Single linkage method is considered pure as it contains the least two-singleton clusters of 15.
+
+#### 2.2(d)
+```{r}
+nclusters <- cutree(single.hclust, h=1.7)
+table(nclusters)
+cat("The number of clusters at the height of 1.7 would be: ", max(nclusters),"\n")
+
+```
+#### 2.2(e)
+```{r}
+#library(cluster)
+#library(factoextra)
+#Single Linkage Cutree
+
+single.hclust.cut<-eclust(scaled.data,FUNcluster = c("hclust"),hc_method="single",k=3)
+fviz_dend(single.hclust.cut, show_labels=TRUE, palette="jco", as.ggplot=T, main="Single-Linkage of Dendrogram at k=3")
+#fviz_silhouette(single.hclust.cut)
+single.sil <- summary(silhouette(cutree(single.hclust.cut, 3), dist(scaled.data)))
+cat("The silhouette index for single linkage cluster at k=3 is: ",single.sil$avg.width,"\n")
+```
+
+```{r}
+#Complete Linkage
+complete.hclust.cut<-eclust(scaled.data,FUNcluster = c("hclust"),hc_method = "complete",k=3)
+fviz_dend(complete.hclust.cut, show_labels=TRUE, palette="jco", as.ggplot=T, main="Complete-Linkage of Dendrogram at k=3")
+#fviz_silhouette(complete.hclust.cut)
+complete.sil <- summary(silhouette(cutree(complete.hclust.cut, k = 3), dist(scaled.data)))
+cat("The silhouette index for complete linkage cluster at k=3 is: ",complete.sil$avg.width,"\n")
+```
+
+```{r}
+#Average Linkage
+avg.hclust.cut<-eclust(scaled.data,FUNcluster = c("hclust"),hc_method = "average",k=3)
+fviz_dend(avg.hclust.cut, show_labels=TRUE, palette="jco", as.ggplot=T, main="Average-Linkage of Dendrogram at k=3")
+#fviz_silhouette(avg.hclust.cut)
+avg.sil <- summary(silhouette(cutree(avg.hclust.cut, 3), dist(scaled.data)))
+cat("The silhouette index for average linkage cluster at k=3 is: ",avg.sil$avg.width,"\n")
+
+
+
+
+```
+
+#### 2.2(f)
+```{r}
+library(NbClust)
+n<-NbClust(scaled.data,method="single")
+#According to the majority rule, the best number of clusters for single linkage strategy would be : 9
+
+```
+```{r}
+NbClust(scaled.data,method = "complete")
+#According to the majority rule, the best number of clusters for complete linkage strategy would be : 2
+```
+```{r}
+NbClust(scaled.data,method = "average")
+#According to the majority rule, the best number of clusters for average linkage strategy would be : 2
+
+```
+#### 2.2(g)
+
+```{r}
+single.link.sil <- summary(silhouette(cutree(single.hclust.cut, 9), dist(scaled.data)))
+cat("The silhouette index for single linkage cluster at k=9 is: ",single.link.sil$avg.width,"\n")
+complete.link.sil <- summary(silhouette(cutree(complete.hclust.cut, k = 2), dist(scaled.data)))
+cat("The silhouette index for complete linkage cluster at k=2 is: ",complete.link.sil$avg.width,"\n")
+avg.link.sil <- summary(silhouette(cutree(avg.hclust.cut, k = 2), dist(scaled.data)))
+cat("The silhouette index for average linkage cluster at k=2 is: ",avg.link.sil$avg.width,"\n")
+
+```
+
+#### 2.2(h)
+The strategy used in 2.2(c) had the silhouette index as the following:
+Single-Linkage Cluster:0.2703044
+Complete-Linkage Cluster:0.3533173
+Average-Linkage Cluster: 0.3775509
+The NbClust strategy gave the following silhouette index:
+Single-Linkage Cluster:0.2254138
+Complete-Linkage Cluster:0.3992433
+Average-Linkage Cluster: 0.4173052
+
+From the above observation, we can deduce that the best linkage method would be the one with the least silhouette index. So, The best linkage method is Single-Linkage method and the best strategy would be NbClust() because the Single-Linkage Cluster in this strategy produces a silhouette index value of 0.2254138 which is the least among all.
+
+
+## Section 2.3
+### 2.3
+
+```{r}
+#rm(list=ls())
+htru <- read.csv("HTRU_2-small.csv", sep=",", header=T)
+htru.scaled<-scale(htru[,1:8])
+```
+
+#### 2.3(a)
+```{r}
+pca <- prcomp(htru.scaled)
+pca
+summary(pca)
+```
+
+##### 2.3(a)(i)
+```{r}
+cat(" The cumulative variance is explained by the first two components is : ",summary(pca)$importance['Cumulative Proportion','PC2'])
+```
+
+
+##### 2.3(a)(ii)
+```{r}
+library(ggfortify)
+biplot(pca,scale = 0)
+#autoplot(prcomp(htru.scaled),data=htru.scaled,colours=c('red','blue'))
+#autoplot(pca, data = htru, colour = 'class', loadings = TRUE)
+#plot(pca$x[,1:2],colours(distinct = FALSE), pch =19, xlab ="PC1", ylab="PC2")
+#ggplot(data = htru, mapping = aes(x = pca$x[,1], y = pca$x[,2], color = "class")) + 
+#geom_point() + labs(x="PC1",y="PC2",color= c("red","blue"))
+autoplot(pca, data = htru, colour = 'class', loadings = TRUE, loadedNamespaces=TRUE, label=TRUE,loadings.label=TRUE)
+
+```
+##### 2.3(a)(iii)
+From the observation done by the plots above, the 2 classes can be differentiated clearly. Most of the Class 0 data points lies in the positive PC1 and Class 1 data points lies in the negative PC1. There are more observations in class 0 as compared to class 1. Class 1 has higher Skewness and Kurtosis and Class 0 has more standard deviation and mean towards the negative quadrant of PC1 and PC2.
+
+
+
+#### 2.3(b)(i)
+```{r}
+pca.kmeans <- kmeans(htru.scaled, centers=2, nstart = 25)
+fviz_cluster(pca.kmeans, data=htru.scaled, main="K-means for Scaled clusters")
+```
+#### 2.3(b)(ii)
+The two clusters have a similar shape.
+K-means takes all factors into account and PCA takes only the 2 most important variables that explains highest standard deviation.It is true that K-means clustering and PCA appear to have very different goals. Yet they are connected. If we run K means on dataset having only 2 principal component then the shape will be similar.
+As first two  principal components always provide much information , and in our case , it explains about 78.55 %.
+
+#### 2.3(b)(iii)
+```{r}
+cat("The distribution of observations in each cluster is as follows:\n")
+cat("Cluster-1: ",pca.kmeans$size[1],"\n")
+cat("Cluster-2: ",pca.kmeans$size[2], "\n")
+```
+#### 2.3(b)(iv)
+```{r}
+htru.class0<-which(htru$class=="0")
+htru.class1<-which(htru$class=="1")
+cat("The distribution in class 0:",NROW(htru.class0),"\n")
+cat("The distribution in class 1:",NROW(htru.class1),"\n")
+#cat("The distribution of classesin the HTRU dataset is ",table(htru$class))
+
+```
+#### 2.3(b)(v)
+Based on the above observation, Cluster-1 corresponds to majority class and Cluster-2 corresponds to minority class.
+
+#### 2.3(b)(vi)
+```{r}
+clstr<- pca.kmeans$cluster 
+cluster1 <- htru[clstr == 1,]
+cluster1
+table(cluster1$class)
+cat("The observations belonging to class 0 is : ", NROW(which(cluster1$class=="0")),"\n")
+cat("The observations belonging to class 1 is : ", NROW(which(cluster1$class=="1")),"\n")
+```
+#### 2.3(b)(vii)
+```{r}
+cat("Based on the analysis above,class 0 with ",NROW(which(cluster1$class=="0"))," observations is represented by the larger cluster")
+
+
+```
+#### 2.3(b)(viii)
+```{r}
+variance<-(pca.kmeans$betweenss/pca.kmeans$totss)*100
+cat("The variance explained by the clustering is :", variance,"%\n")
+```
+```{r}
+cat("Based on the observations done from the pca.kmeans, the variance is: 35.9% \n\n\n\n")
+
+pca.kmeans
+```
+#### 2.3(b)(ix)
+
+```{r}
+silh<- silhouette(pca.kmeans$cluster, dist(htru.scaled))
+avg.silh.width <- mean(silh[, 3])
+cat("The average silhouette width of both the clusters is given by: ",avg.silh.width,"\n")
+summary((silh))
+
+```
+#### 2.3(b)(x)
+```{r}
+cat("The silhouette width of Cluster 1(8847 observations) is : 0.6592013 and Cluster 2(1153 observations) is : 0.1516389  \n")
+cat("Cluster 1 is good since its per cluster silhouette width  is close to 1.\n")
+
+```
+#### 2.3(c)(i)
+```{r}
+pca.kmeans1 <- kmeans(pca$x[, 1:2], centers=2,nstart = 25)
+fviz_cluster(pca.kmeans1, data=htru.scaled, main="K-means on first 2 PCA vectors")
+
+```
+The Shapes of all 3 plots from a(ii), b(i) and c(i) are similar.
+From the observation, we can say that the plot of c(i) has more observations for cluster 1 than the other 2 plots. The points in cluster 2 are more towards the negative of the Dim1.
+
+
+#### 2.3(c)(ii)
+```{r}
+#library(fpc)
+#pca.new <- cluster.stats(dist(pca$x[,1:2]),pca.kmeans1$cluster)
+#cat("The average silhouette width of both the clusters is : ",pca.new$avg.silwidth,"\n")
+
+```
+
+```{r}
+sil1<-summary(silhouette(pca.kmeans1$cluster,dist(htru.scaled)))
+cat("The average silhouette width of both the clusters is : ",sil1$avg.width)
+
+```
+
+#### 2.3(c)(iii)
+```{r}
+cat("The silhouette width of cluster 1 is : ",sil1$clus.avg.widths[1],"\n")
+cat("The silhouette width of cluster 2 is : ",sil1$clus.avg.widths[2],"\n")
+cat("Based on this, Cluster 1 is good as its value is close to 1")
+
+```
+#### 2.3(c)(iv)
+
+comparing c(ii) and b(ix) values, value for avg silhouette width, c(ii) is nearer to 1 then b(ix). 
+
+comaparing c(iii) and b(x) values for per cluster Silhouette width, 
+for cluster 1, b(x) have silhouette width more nearer to 1 then c(iii)
+for cluster 2, c(iii) have silhouete width more nearer to 1 then b(x) 
+
+
+

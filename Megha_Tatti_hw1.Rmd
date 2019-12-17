@@ -1,0 +1,236 @@
+---
+title: "CS422 Section 01"
+author: "Megha Tatti, A20427027, Illinois Institute of Technology"
+date: "February 17, 2019"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+  html_notebook:
+    df_print: paged
+    toc: yes
+    toc_float: yes
+    toc_depth: 5
+---
+
+# Part 2
+## Section 2.1 Problem 1
+### 2.1 (a)
+
+```{r}
+setwd("C://Users//megha//Desktop//DM//Megha_Tatti_hw1//")
+college.df <- read.csv("College.csv", sep=",", header = T)
+print(head(college.df,n=6))
+```
+
+
+### 2.1 (b)
+```{r}
+colleges<-table(college.df$Private)
+cat("Number of Public Colleges: ",colleges[names(colleges)[] == "No"],"\n")
+cat("Number of Private Colleges: ",colleges[names(colleges)[] == "Yes"],"\n")
+
+
+```
+
+
+### 2.1 (c)
+```{r}
+library(dplyr)
+publicColleges<- data.frame(filter(college.df,college.df$Private=="No"))
+#publicColleges
+
+privateColleges<-data.frame(filter(college.df,college.df$Private=="Yes"))
+#privateColleges
+
+hist(publicColleges$PhD,
+     main = "Histogram of PhD Holders in Public Colleges",
+     xlab = "No. of PhD Holders",
+     breaks=30,
+     border = c("brown","yellow","red"),
+     prob = TRUE,
+     xlim = c(20,100),
+     col = c("magenta","green","blue"),
+     freq = FALSE)
+lines(density(publicColleges$PhD), col="red", lwd=4)
+
+ hist(privateColleges$PhD,
+     main = "Histogram of PhD Holders in Private Colleges",
+     xlab = "No. of PhD Holders",
+     breaks=50,
+     border = c("magenta","green","blue"),
+     prob = TRUE,
+     xlim = c(20,100),
+     col = c("brown","yellow","red"),
+     freq = FALSE)
+lines(density(privateColleges$PhD), col="blue", lwd=4)
+#According to the observation made form the histograms, Private colleges are top-heavy than Public colleges with respect to PhD faculty
+```
+
+### 2.1 (d)
+```{r}
+dataSort<-arrange(college.df,Grad.Rate)
+dataSort
+minGrad<-head(select(dataSort,Name,Grad.Rate),n=5)
+minGrad
+maxGrad<-tail(select(dataSort,Name,Grad.Rate),n=5)
+maxGrad
+
+```
+
+### 2.1 (e)
+#### (i)
+```{r}
+summary(college.df)
+```
+
+#### (ii)
+```{r}
+pairs(college.df[, 1:10], main="Scatterplot matrix of the first 10 columns or variables of the data",col=c("brown"))
+
+```
+#### (iii)
+```{r}
+boxplot(perc.alumni ~ Private, data = college.df,main = "Donation of Alumni from Public Colleges vs Private Colleges",  xlab = "Type of College",ylab = "Donation by Alumni", names=c("Public College" , "Private College"),col="purple")
+
+
+#According to the observation from box plot, we can see that alumni of private colleges donated more to their College than the alumni of the public colleges
+
+```
+
+#### (iv)
+```{r}
+boxplot(PhD ~ Private, data = college.df,main = "Employement of PhD faculties in Public Colleges vs Private Colleges",  xlab = "Type of College",ylab = "Number of PhD faculties employed", names=c("Public College" , "Private College"),col="cyan3")
+
+
+```
+#### (v)
+```{r}
+college.df
+Elite <- rep("No", nrow(college.df))
+Elite[college.df$Top10perc > 50] <- "Yes"
+Elite <- as.factor(Elite)
+college.df <- data.frame(college.df, Elite)
+summary(college.df$Elite)
+
+#So, according to summary() there are 78 Elite universities.
+```
+#### (vi)
+```{r}
+par(mfrow=c(2,2))
+hist(college.df$Apps, main="Histogram for No. of Applications",xlim=c(0,5000), xlab = "Number of Applications", col=c("blueviolet","azure4"), breaks=50)
+hist(college.df$Accept, main="Histogram for Accepted Applications",xlim=c(0,5000), xlab = "Number of Acceptance", col=c("aquamarine2","red"), breaks=50)
+hist(college.df$Outstate, main="Histogram for Outstate Students",xlim=c(0,5000), xlab = "Number of Outstate Students", col=c("chartreuse","blueviolet"), breaks=50)
+hist(college.df$F.Undergrad, main="Histogram for FullTime Undergrad Students",xlim=c(0,5000), xlab = "Number of FullTime Undergraduates", col=c("cadetblue1","brown2"), breaks=50)
+```
+#### (vii)
+```{r}
+# I learnt how by using different permutation combination to generate co-relation with different attribute, we can really learn new relationships and patterns about the data.
+
+#Exploring more 
+plot(college.df$Elite, college.df$Expend, xlab= "Elite Colleges", ylab="Instructional expenditure per student")
+plot(college.df$Elite, college.df$Outstate, xlab= "Elite Colleges", ylab="Out-of-state tuition")
+plot(college.df$Private, college.df$Room.Board, xlab= " Public/private indicator", ylab="Room and board costs",names=c("Public College" , "Private College"))
+plot(college.df$Private, college.df$PhD, xlab= " Public/private indicator", ylab=" Percent of faculty with Ph.D.'s",names=c("Public College" , "Private College"))
+plot(college.df$Elite, college.df$Grad.Rate, xlab= "Elite Colleges", ylab="Graduation rate")
+
+#The top 10 percent of students from high school prefer the Elite colleges because of multiple reasons. The elite colleges have more number of faculty with PhD so they must believe that they will get a better education. They also have a slightly better graduation rate than other colleges. Private colleges are more costlier than public colleges for rooms and as well as tution. The expenditure per student is also high in elite colleges which explains the high tution costs.
+
+
+plot(college.df$Top10perc, college.df$Grad.Rate,xlab="Students From top 10% of High Scchool", ylab = "College Graduation Rate", main = "Top10Perc Vs Graduation Rate")
+
+#New Students from top 10% of the high school class dosen't have high graduation rate.
+
+
+
+plot(college.df$Private,college.df$F.Undergrad,xlab="Private/Public universities",ylab="Full Time Undergraduates", main="Private Vs F.undergrad",names=c("Public College" , "Private College"))
+plot(college.df$Private,college.df$P.Undergrad,xlab="Private/Public universities",ylab="Part Time Undergraduates", main="Private Vs P.undergrad",names=c("Public College" , "Private College"))
+
+#Public universities have higher number of Full-time and Part-time Undergraduates than private universities.
+
+
+```
+## Section 2.2 Problem 2
+### 2.2 (a)[8a]
+```{r}
+library(ISLR)
+data(Auto)
+lmf<-lm(mpg ~ horsepower, data=Auto)
+summary(lmf)
+
+```
+
+#### (i)
+Yes,there is a relationship between the predictor(horsepower) and the response(mpg).
+
+#### (ii)
+The relationship is strong as the R-square is 0.6049
+
+####(iii)
+The relationship between the predictor(horsepower) and the response(mpg) is negative which is indicated by the sign of coefficient.
+
+
+####(iv)
+```{r}
+predict(lmf, data.frame("horsepower"=98), interval="confidence")
+predict(lmf, data.frame("horsepower"=98), interval="prediction")
+
+#predicted value of mpg is 24.46708.Confidence interval is (23.97308 - 24.96108) and prediction interval is (14.8094 - 34.12476)
+```
+
+### 2.2(b)[8b]
+```{r}
+plot(Auto$horsepower, Auto$mpg,main = "plot of response(mpg) and predictor(horsepower)",xlab = "horsepower",ylab = "mpg", col="aquamarine4")
+abline(lmf, lwd=3, col="brown3")
+
+```
+
+
+### 2.2(c)[8c]
+
+```{r}
+par(mfrow=c(2,2))
+plot(lmf)
+
+#the plot suggests that there is a  non linear relationship between predictor and response variable
+```
+## Section 2.3 Problem 3
+### 2.3 (a)[9a]
+```{r}
+pairs(Auto)
+
+```
+### 2.3(b)[9b]
+```{r}
+cor(Auto[, !(names(Auto)=="name")])
+```
+###2.3(c)[9c]
+```{r}
+lmf2 <- lm(mpg ~ .-name, data=Auto)
+summary(lmf2)
+
+```
+#### (i)
+Yes,there is a relationship between the predictor and the response. The p-value of F-statistic is less than 0.05.This tells that we can reject the null hypothesis and conclude there is atleast one variable which is significant in predicting mpg.
+
+#### (ii)
+Predictors that appear to have a statistically significant relationship to the response(mpg) are: displacement, weight, year and origin.
+
+
+####(iii)
+The coefficient for the year(0.750773) variable suggest that if all other variables are constant then on an average, mpg increases by 0.75 every year.
+
+### 2.3(d)[9d]
+```{r}
+par(mfrow=c(2,2))
+plot(lmf2)
+
+
+#First plot: residuals vs fitted value plot shows non linearity in the relationship
+#Second plot: residuals are normally distributed.
+#Third plot: the variance of the errors is constant.
+#Fourth plot: there are no leverage points in the data.
+
+```
+
+

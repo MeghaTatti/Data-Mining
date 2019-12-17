@@ -1,0 +1,57 @@
+---
+title: "CS 422 Section 01"
+author: "Megha Tatti, A20427027,Illinois Institute of Technology"
+output:
+  html_notebook:
+    df_print: paged
+    toc: yes
+    toc_float: yes
+  html_document:
+    df_print: paged
+    toc: yes
+---
+
+
+### Part 1-A
+```{r}
+setwd("C:/Users/megha/Desktop/DM/Megha_Tatti_hw0")
+data(cars)
+cars
+```
+
+### Part 1-B
+
+```{r}
+plot(cars, main="The Cars Dataset")
+```
+### Part 1-C 
+```{r}
+summary(cars)
+```
+
+### Part 1-D
+```{r}
+summ <- summary(cars)
+max.speed.str <- summ[,1][6]
+max.speed.str <- strsplit(max.speed.str, ":")
+max.speed <- max.speed.str[[1]][2]
+
+min.dist.str <- summ[,2][1]
+min.dist.str <- strsplit(min.dist.str, ":  ")
+min.dist <- min.dist.str[[1]][2]
+
+str <- paste0("Maximum speed is ", max.speed, ", and minimum distance is ", 
+              min.dist)
+str
+```
+
+### Part 2-A 
+```{r}
+df <- read.csv("student.csv", sep=";", header=T)
+df
+```
+```{r}
+newdf<- data.frame(name="Brad Pitt", id=40051L, gpa=2.21, grade="C")
+updatedf<-rbind(df,newdf)
+updatedf
+```

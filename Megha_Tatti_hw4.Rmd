@@ -1,0 +1,496 @@
+---
+title: "CS 422 Section 01"
+author: "Megha Tatti, A20427027, Illinois Institute of Technology"
+date: "5/3/2019"
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_depth: '5'
+  html_notebook:
+    toc: yes
+    toc_depth: 5
+    toc_float: yes
+---
+
+# Part 2
+## Section 2.1
+### 2.1
+```{r}
+rm(list=ls())
+library(textreuse)
+setwd("C:/Users/megha/Desktop/DM/Megha_Tatti_hw4")
+minhash <- minhash_generator(n=120, seed=100)
+cfiles<-list.files("corpus",full.names = T)
+texcorpus <- TextReuseCorpus(cfiles, tokenizer = tokenize_ngrams, n = 5,minhash_func = minhash,keep_tokens = TRUE)
+```
+
+#### 2.1(a)
+
+```{r}
+#wordcount(texcorpus)
+t<-tokens(texcorpus)
+rcount <- length(unique(unlist(t),use.names = TRUE ))
+cat("The number of shingles (or tokens) in all of the 100 documents is : ", rcount ,"\n")
+
+```
+
+#### 2.1(b)
+
+```{r}
+ccount <- length(texcorpus)
+rows <- c()
+for(i in 1:ccount)
+  {
+  tokens <- hashes(texcorpus[i])[[1]]
+  rows <- union(rows, tokens) 
+}
+rcount <- length(unique(unlist(rows),use.names = TRUE ))
+sprintf(" The dimensions of the characteristic matrix is : %d X %d ",rcount,ccount)
+sprintf("Where the number of columns: %d , and rows: %d",ccount,rcount)
+
+```
+
+#### 2.1(c)
+
+```{r}
+doc <- texcorpus[["orig_taske"]]
+cat("The first 5 shingles of the file orig_taske.txt is as follows: \n")
+head(tokens(doc)[1:5])
+```
+#### 2.1(d)
+
+```{r}
+#lsh_threshold(h=240,b=40)
+#lsh_threshold(h=240,b=60)
+new.set<-lsh_threshold(h=240,b=80)
+per240<-(240*100)/rcount
+per.decrease<-(100- per240)
+sprintf("This represents %f percentage reduction in the size of the problem ", per.decrease)
+```
+
+
+#### 2.1(e)
+
+```{r}
+b<-80
+new.set<-lsh_threshold(h=240,b=80)
+sprintf("At band value %d , we can detect  detect a minimum Jaccard similarity of %f",b,new.set)
+
+```
+
+#### 2.1(f)
+
+```{r}
+prob<-lsh_probability(h=240,b=80, s=0.23)
+cat("Probability of catching similar documents at a minimum Jaccard similarity of 0.23 is :", prob)
+
+```
+
+#### 2.1(g)
+
+```{r}
+compare.pair<- pairwise_compare(texcorpus, jaccard_similarity) 
+res <- pairwise_candidates(compare.pair)
+```
+##### 2.1(g(i))
+
+```{r}
+cat("4950 comparisions were made when we used the characteristic matrix")
+```
+##### 2.1(g(ii))
+
+```{r}
+tib<-length(which(res[3] >= 0.23))
+cat("The number of documents with a Jaccard similarity score of at least 0.23 is :", tib)
+```
+##### 2.1(g(iii))
+
+```{r}
+res <- res[res$score>=0.23,]
+tib.data<- res[order(res$score, decreasing = TRUE),]
+tib.data
+```
+
+#### 2.1(h)
+
+```{r}
+
+minhash1 <- minhash_generator(n=240 , seed=100)
+texcorpus1 <- TextReuseCorpus(cfiles, tokenizer = tokenize_ngrams,minhash_func = minhash1, n = 5, keep_tokens = TRUE, progress = FALSE)
+
+
+texcorpus1.lsh<- lsh(texcorpus1,bands = 80, progress = FALSE)
+candi.lsh<-lsh_candidates(texcorpus1.lsh)
+compare.lsh <- lsh_compare(candi.lsh,texcorpus1,jaccard_similarity)
+
+
+```
+
+##### 2.1(h(i))
+
+```{r}
+
+cat("There were 26 comparisons made")
+
+```
+##### 2.1(h(ii))
+
+```{r}
+per26<-(26*100)/4950
+perc<-(100- per26)
+cat("Comparisons in g(i) was: 4950 \n")
+cat("Comparisons now in h(i): 26\n")
+sprintf("Compared to the number of comparisons made in (g)(i), %f percentage decrease was seen in the
+computation needed to find the candidate pairs",perc)
+
+```
+
+##### 2.1(h(iii))
+
+```{r}
+new.tib <- compare.lsh[order(compare.lsh$score, decreasing = TRUE),]
+new.tib
+tib.row<-NROW(new.tib)
+cat("The number of rows in the tibble are: ",tib.row )
+
+```
+##### 2.1(h(iv))
+
+```{r}
+sim.index<-which(compare.lsh$score >= 0.23)
+nsim<-compare.lsh[sim.index,]
+cat("The number of rows containing a similarity index of at least 0.23 is :", NROW(nsim))
+
+```
+
+##### 2.1(h(v))
+
+```{r}
+compare.lsh <- compare.lsh[compare.lsh$score>=0.23,]
+tib.data23<- compare.lsh[order(compare.lsh$score, decreasing = TRUE),]
+tib.data23
+
+```
+#### 2.1(i)
+
+```{r}
+tib.data
+tib.data23
+str(tib.data)
+cat("\n\n\n")
+str(tib.data23)
+cat("\n\n\n")
+summary(tib.data)
+cat("\n\n\n")
+summary(tib.data23)
+
+#From the summary we can see that the mean and the median increases when the number of documents decreases from 14 to 11 though the min and max remains the same. This means that the LSH rigorious analysis for document duplication.
+#We can also see that the number of comparisions too decreased from 4950 comparisions to 26 compairisions which makes 99.474747% decrease in the computation improving efficiency .
+
+```
+
+## Section 2.2
+### 2.2
+### User Profile
+
+```{r}
+rm(list=ls())
+library(dplyr)
+#u.id<-mod(20427027,671)
+u.id<-20427027%%671
+cat("The user id : ",u.id)
+movies<-read.csv("ml-latest-small/movies.csv",header = T,sep=",")
+ratings<-read.csv("ml-latest-small/ratings.csv",header = T,sep=",")
+#Movies watched by the user with userID = 445
+umovies <- filter(ratings[which(ratings$userId== u.id), ])
+umovies
+#Details of movie watched by the user 
+um.id<-umovies$movieId
+m.id<-movies$movieId
+ugenre <- filter(movies[which(m.id %in% um.id),])
+ugenre
+ugenre$genres <- as.character(ugenre$genres)
+row.names(ugenre) <- 1:nrow(ugenre)
+#row.names(ugenre)
+
+```
+
+```{r}
+u.gen<- c("Action", "Adventure", "Animation", "Children", "Comedy", "Crime", "Documentary", "Drama", "Fantasy","Film-Noir", "Horror", "IMAX", "Musical", "Mystery", "Romance", "Sci-Fi", "Thriller", "War", "Western", "(no genres listed)")
+new.row<-nrow(ugenre)
+newr<-new.row+1
+
+uprofile <- matrix(as.numeric(0),nrow = newr,ncol = length(u.gen))
+colnames(uprofile) <- factor(u.gen)
+
+#now wee add the avg row
+new.rname <- ugenre$movieId 
+new.rname[length(new.rname )+ 1] <- "AVG" 
+row.names(uprofile) <- new.rname
+row.gen<-nrow(ugenre)
+uprofile[row.gen,1] <- 0
+for (i in 1:row.gen) {
+    glist <- unlist(strsplit(ugenre[i,]$genres,split="[|]"))
+    for (j in 1:length(glist)){
+        uprofile[i,glist[j]] <- as.integer(1)
+    }
+}
+for(m in 1:length(u.gen)){
+  uprofile[newr,m] <- mean(as.numeric(uprofile[1:row.gen,m]))
+} # we calculate mean
+
+head(uprofile)
+#uprofile
+
+```
+```{r}
+#storing the userprofile in ml-latest-small
+fname <- paste("userprofile_445.csv", sep = "")
+write.csv(uprofile,file =file.path("ml-latest-small", fname))
+```
+
+### Movie Profile
+### Selecting 10 random movies
+```{r}
+#taking 10 random movies
+random.len <- movies[sample(nrow(movies), 10, replace = FALSE), ]
+#Taking all the genres of the selected random movie list
+random.len$genres <- as.character(random.len$genres)
+#random.len$genres
+rownames(random.len) <- 1:10
+random.len
+```
+### Creating Movie Profile
+
+```{r}
+mprofile <- matrix(as.numeric(0),nrow = 10 ,ncol = length(u.gen))
+
+#creating columns
+colnames(mprofile) <- factor(u.gen)
+#creating rows
+row.names(mprofile) <- random.len$movieId
+
+for (i in 1:nrow(random.len)) {
+    lgenre <- unlist(strsplit(random.len[i,]$genres,split="[|]"))
+    for (j in 1:length(lgenre)){
+        mprofile[i,lgenre[j]] <- as.integer(1)
+    }
+}
+#mprofile
+head(mprofile)
+```
+
+
+```{r}
+#storing the movieprofile in ml-latest-small
+
+fname1 <- paste("movieprofile_445.csv", sep = "")
+write.csv(mprofile,file =file.path("ml-latest-small", fname1))
+
+```
+
+### Cosine Similarity
+```{r}
+
+cosSim <- function(x, y) {
+  sum(x*y)/(norm(x, type="2")*norm(y, type="2"))
+}
+
+finalRmovies <- random.len[c(-3)]
+nrowup<-nrow(uprofile)
+nrowmp<-nrow(mprofile)
+avg<- uprofile[nrowup, ]
+#avg
+for(i in 1:nrowmp){
+    finalRmovies[i,"similarity"] <- cosSim(mprofile[i,], avg)    
+}
+
+
+
+simFinal<-finalRmovies$similarity
+finalRmovies <- finalRmovies[order(simFinal,decreasing = TRUE),]
+
+# Recommending top 5
+top5<- finalRmovies[1:5,]
+rownames(top5) <- NULL
+
+top5
+
+
+
+```
+## Section 2.3
+### 2.3 Collaborative Filtering
+
+```{r}
+rm(list=ls())
+movies2 <- read.csv("ml-latest-small/movies.csv",header = TRUE,sep = ",")
+ratings2 <- read.csv("ml-latest-small/ratings.csv",header = TRUE,sep = ",")
+#ratings2
+
+userM <- ratings2 %>%
+  left_join(movies2, by = c("movieId" = "movieId")) %>%
+  filter(ratings2$userId == 191)
+userM
+
+#Setting test observations
+test.id<-c(150,296,380,590)
+testobv <- userM[which(userM$movieId %in% test.id),c(2,3)]
+testobv
+ratings2[which(ratings2$userId == 191 & ratings2$movieId %in% test.id),3] <- "NA"
+#ratings2[which(ratings2$userId == 191 & ratings2$movieId %in% test.id),3]
+
+```
+#### 2.3(a)
+
+```{r}
+ratings2 <- data.frame(lapply(ratings2, as.character),stringsAsFactors = FALSE)
+#ratings2
+
+
+#ne<-ratings2[sample(nrow(ratings2), 5, replace = FALSE), ]
+#u4mtable<-ne$userId
+#u4mtable
+
+#taking random 5 users from the table
+random5 <- c("415","513","50","657","266") 
+
+#The jaccard coefficients of the above 5 users
+jac5 <- c(0.3255814,0.4358974,0.2009804,0.2262774,0.2216216)
+user415 <- filter(subset(ratings2,ratings2$userId==415))
+user415
+user513 <- filter(subset(ratings2,ratings2$userId==513))
+user513
+user50 <-filter(subset(ratings2,ratings2$userId==50))
+user50
+user657 <- filter(subset(ratings2,ratings2$userId==657))
+user657
+user266 <-filter(subset(ratings2,ratings2$userId==266))
+user266
+
+listmov <- intersect(userM$movieId,user415$movieId)
+listmov <- c(unique(listmov),intersect(userM$movieId,user50$movieId))
+listmov <- c(unique(listmov),intersect(userM$movieId,user657$movieId))
+listmov <- c(unique(listmov),intersect(userM$movieId,user266$movieId))
+listmov <- c(unique(listmov),intersect(userM$movieId,user513$movieId))
+listmov <- unique(listmov)
+listmov
+
+utilityMatrix <- matrix(as.numeric(0),nrow = 6,ncol = 29)
+
+colnames(utilityMatrix) <- listmov
+merge.users <- c("191",random5)
+#merge.users
+rownames(utilityMatrix) <- merge.users
+
+musers<-length(merge.users)
+lmovies<-length(listmov)
+for(i in 1:musers)
+  {
+  sub.info <- subset(ratings2,ratings2$userId==merge.users[i])
+  tu.id <- sub.info[1,1]
+  for(k in 1:lmovies)
+    {
+    m.id <- listmov[k]
+    rvalue <- sub.info[which(m.id  == sub.info$movieId),3]
+    utilityMatrix[tu.id,m.id] <- ifelse(identical(rvalue, character(0)),NA ,rvalue)
+  }
+}
+utilityMatrix
+
+
+####User-User Similarity Prediction
+
+rmse<-0
+final <- data.frame()
+ran5.l<-length(random5)
+ran.neigh <- random5[sample(1:ran5.l, 3, replace = FALSE)]
+ranN.l<-length(ran.neigh)
+#ran.neigh
+for(i in 1:nrow(testobv))
+  {
+  numer <- 0
+  denom <- 0
+    for(j in 1:ranN.l)
+      {
+          n.id<- ran.neigh[j]
+          jaccardSim <- as.numeric(jac5[which(random5 == n.id)])
+          ind <- which(merge.users == n.id)
+          m.index<- which(listmov == testobv$movieId[i] )
+          rvalue <- as.numeric(utilityMatrix[ind, m.index])
+          numer <-  numer + (jaccardSim * rvalue)
+          denom <- denom + jaccardSim
+    }
+    mid = as.character(testobv$movieId[i])
+    r = (numer) / (denom)
+    rmse=round((r-testobv$rating[i])^2,4)
+    final <- rbind (final, data.frame(mid, r))
+}
+mid= "RMSE"
+r<-sqrt(rmse/4)
+final<- rbind (final, data.frame(mid, r))
+final
+
+```
+#### 2.3(b)
+
+```{r}
+utilityItem <- t(utilityMatrix)
+#utilityItem
+
+
+####To find the mean 
+
+meanUtility<-utilityItem
+meanUtility[is.na(meanUtility)] <- 0
+#meanUtility
+
+row.util<-nrow(utilityItem)
+
+for(i in 1:row.util)
+  {
+  temp <- mean(as.double(meanUtility[i,]),na.rm = T)
+  meanUtility[i,]<-round(temp-as.double(meanUtility[i,]),3)
+}
+
+cat("\n\n")
+colnames(meanUtility)<-merge.users
+rownames(meanUtility)<-listmov
+meanUtility
+cat("\n \n \n")
+
+
+
+#### cosine similarity operation
+
+meanUtility[is.na(meanUtility)] <- 0
+#meanUtility
+cosUtil <- function(x, y) {
+  sum(x*y)/(norm(x, type="2") * norm(y, type="2"))
+}
+newCos<-array(dim = c(nrow(meanUtility),4))
+
+for(j in 1:nrow(testobv)){
+  for(i in 1:nrow(meanUtility)){
+    if(listmov[i] %in% testobv$movieId ){
+    } else{
+     newCos[i,j] <- round(cosUtil(as.double(meanUtility[i,]), as.double(meanUtility[j,])),3)
+    }
+    
+  }
+}
+colnames(newCos)<-testobv$movieId
+row.names(newCos) <- listmov
+newCos
+
+```
+
+#### Prediction
+
+```{r}
+
+
+
+````
+
